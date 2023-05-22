@@ -91,7 +91,6 @@ orders_cfg AS (
         ,GREATEST(COALESCE(is0.created_at, ''), COALESCE(ws0.created_at, '')) AS last_scan_at
             
     FROM orders_cfg
-    -- last scan
     LEFT JOIN warehouse_sweeps ws0 ON ws0.id = orders_cfg.latest_warehouse_sweep_id
     LEFT JOIN inbound_scans is0 ON is0.id = orders_cfg.latest_inbound_scan_id            
     
@@ -131,9 +130,7 @@ JOIN sort_prod_gl.hubs h ON h.hub_id = pre.last_scan_hub_id
     AND h.sort_hub = 0
     
 WHERE TRUE
-    -- Filter orders that being at LM
     AND pre.last_scan_hub_id = pre.delivery_hub_id 
-    -- Filter orders that being at LM but not inbounded to Dest_hub, inbounded to other hub that in the same Zone/Province of AV-Destination
     OR (
         pre.last_scan_hub_id != pre.delivery_hub_id 
-        AND trim(substring(h.name,1,3)) = pre.delivery_province )
+        AND trim(substring(h.name,1,3)) = pre.delivery_province)
