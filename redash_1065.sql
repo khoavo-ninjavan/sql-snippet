@@ -6,7 +6,6 @@ select id from driver_prod_gl.failure_reasons where system_id = 'vn' and descrip
 -region
 103:South, 89:HN, 101:North, 91:HCM
 */
--- explain
 WITH 
 orders_cfg AS (
     SELECT
