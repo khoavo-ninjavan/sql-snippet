@@ -55,7 +55,7 @@ orders_cfg AS (
         WHERE TRUE
             AND zones_view.system_id = 'vn'
             AND hubs.system_id = 'vn'
-            AND hubs.region_id = ({{region}})
+            AND hubs.region_id = {{region}}
         ) h ON h.legacy_zone_id = wp.routing_zone_id 
             AND h.hub_id IS NOT NULL
 
