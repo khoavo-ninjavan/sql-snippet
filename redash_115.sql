@@ -1,1 +1,2 @@
 SELECT "Test"
+WHERE TRUE
