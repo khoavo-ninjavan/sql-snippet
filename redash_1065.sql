@@ -57,7 +57,6 @@ orders_cfg AS (
             AND hubs.region_id = {{region}}
         ) h ON h.legacy_zone_id = wp.routing_zone_id 
             AND h.hub_id IS NOT NULL
-
     JOIN (
         SELECT
             short_name
@@ -92,8 +91,7 @@ orders_cfg AS (
             
     FROM orders_cfg
     LEFT JOIN warehouse_sweeps ws0 ON ws0.id = orders_cfg.latest_warehouse_sweep_id
-    LEFT JOIN inbound_scans is0 ON is0.id = orders_cfg.latest_inbound_scan_id            
-    
+    LEFT JOIN inbound_scans is0 ON is0.id = orders_cfg.latest_inbound_scan_id
     JOIN (
         SELECT 
             order_id, service_end_time
@@ -101,7 +99,7 @@ orders_cfg AS (
         WHERE TRUE
             AND type = 'PP'
             AND status = 'Success'
-        ) t ON t.order_id = orders_cfg.order_id -- remove parcels not picked up
+        ) t ON t.order_id = orders_cfg.order_id
 
 )
 SELECT 
