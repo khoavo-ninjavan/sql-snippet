@@ -1,2 +1,2 @@
-SELECT "Test"
-WHERE TRUE
+SELECT "Testing"
+WHERE TRUE 
