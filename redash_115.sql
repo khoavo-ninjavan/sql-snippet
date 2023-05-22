@@ -1,1 +1,1 @@
-ELECT "Test"
+SELECT "Test"
