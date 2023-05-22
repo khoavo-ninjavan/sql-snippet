@@ -33,8 +33,7 @@ orders_cfg AS (
         ,first_value(t1.service_end_time) OVER (PARTITION BY t1.order_id ORDER BY if(t1.service_end_time is not null, t1.service_end_time, '2001-01-01') DESC) AS last_txn_time
         ,first_value(t1.comments) OVER (PARTITION BY t1.order_id ORDER BY if(t1.service_end_time is not null, t1.service_end_time, '2001-01-01') DESC) AS last_comment
 
-    FROM orders o force index (granular_status, primary,shipper_id)
-
+    FROM orders o force index (granular_status, primary, shipper_id)
     JOIN transactions t1 force index (order_id, service_end_time, type, seq_no, waypoint_id) ON o.id = t1.order_id
         AND o.granular_status IN ('On Hold','Arrived at Sorting Hub', 'On Vehicle for Delivery', 'Pending Reschedule')
         AND t1.service_end_time > now() - interval 1 week
@@ -94,7 +93,8 @@ orders_cfg AS (
     LEFT JOIN inbound_scans is0 ON is0.id = orders_cfg.latest_inbound_scan_id
     JOIN (
         SELECT 
-            order_id, service_end_time
+            order_id
+            ,service_end_time
         FROM transactions force index (order_id, type, status)
         WHERE TRUE
             AND type = 'PP'
