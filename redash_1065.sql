@@ -14,6 +14,7 @@ orders_cfg AS (
         ,o.created_at
         ,o.latest_warehouse_sweep_id
         ,o.latest_inbound_scan_id
+        ,o.from_contact
         ,CASE
             WHEN substr(trim(s0.short_name),1,6) = 'Shopee' THEN 'Shopee'
             WHEN (LEFT(s0.sales_person, 4) IN ('FHN-', 'FTS-', 'FNO-', 'FSO-', 'FBD-')) OR (LEFT(s0.sales_person, 4) = 'FHC-' AND s0.name NOT REGEXP 'RTL|FRC') THEN 'FS'
@@ -36,11 +37,14 @@ orders_cfg AS (
     FROM orders o force index (granular_status, primary, shipper_id)
     JOIN transactions t1 force index (order_id, service_end_time, type, seq_no, waypoint_id) ON o.id = t1.order_id
         AND o.granular_status IN ('On Hold','Arrived at Sorting Hub', 'On Vehicle for Delivery', 'Pending Reschedule')
-        AND t1.service_end_time > now() - interval 1 week
+        AND o.rts = 0
+        AND t1.service_end_time > now() - interval 3 day
         AND t1.type = 'DD'
-        AND (t1.seq_no >=4 OR (t1.seq_no =3 AND t1.status != 'Pending'))
+        AND t1.seq_no >=2  
+    JOIN transaction_failure_reason ON t1.id = transaction_failure_reason.transaction_id
+        AND transaction_failure_reason.created_at > now() - interval 3 day
     JOIN waypoints wp force index (PRIMARY, created_at, waypoints_routing_zone_id_zone_type_index) ON wp.id = t1.waypoint_id
-        AND wp.created_at > now() - interval 1 week
+        AND wp.created_at > now() - interval 3 day
     LEFT JOIN (
         SELECT 
             hubs.name
@@ -77,7 +81,7 @@ orders_cfg AS (
     SELECT 
         orders_cfg.*
         ,t.service_end_time AS pickup_at
-        ,last_seq - t.seq_no + 1 AS no_attempts
+        ,last_seq - t.seq_no AS no_attempts
         ,CASE 
             WHEN GREATEST(COALESCE(is0.created_at, ''), COALESCE(ws0.created_at, '')) = COALESCE(is0.created_at, '') THEN is0.hub_id
             ELSE ws0.hub_id
@@ -87,6 +91,7 @@ orders_cfg AS (
             ELSE 'parcel routing'
         END AS last_scan_type
         ,GREATEST(COALESCE(is0.created_at, ''), COALESCE(ws0.created_at, '')) AS last_scan_at
+        ,contact AS shipper_contact
             
     FROM orders_cfg
     LEFT JOIN warehouse_sweeps ws0 ON ws0.id = orders_cfg.latest_warehouse_sweep_id
@@ -94,6 +99,7 @@ orders_cfg AS (
     JOIN (
         SELECT 
             order_id
+            ,contact
             ,service_end_time
             ,seq_no
             
@@ -102,6 +108,7 @@ orders_cfg AS (
             AND type = 'PP'
             AND status = 'Success'
         ) t ON t.order_id = orders_cfg.order_id
+    WHERE TRUE
 
 )
 SELECT 
@@ -110,6 +117,7 @@ SELECT
     ,rts
     ,shipper_id
     ,shipper_group
+    ,shipper_contact
     ,pre.created_at + interval 7 hour AS created_at
     ,pickup_at + interval 7 hour AS pickup_at
     ,granular_status
@@ -122,9 +130,7 @@ SELECT
     ,trim(substring(h.name,1,3)) AS curr_province
     ,h.short_name AS curr_short_name
     ,h.region_name AS curr_region
-    ,last_scan_at
-    ,DATEDIFF(NOW(), pre.last_scan_at) AS days_from_last_scan
-    ,DATEDIFF(NOW(), pre.pickup_at) AS days_from_pickup
+    ,last_scan_at + interval 7 hour AS last_scan_at
 
 FROM pre
 JOIN sort_prod_gl.hubs h ON h.hub_id = pre.last_scan_hub_id 
