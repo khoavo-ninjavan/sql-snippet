@@ -31,8 +31,7 @@ orders_cfg AS (
         ,first_value(trim(substring(h.name,1,3))) OVER (PARTITION BY t1.order_id ORDER BY t1.seq_no DESC) AS delivery_province
         ,first_value(t1.seq_no) OVER (PARTITION BY t1.order_id ORDER BY if(t1.service_end_time is not null, t1.service_end_time, '2001-01-01') DESC) AS last_seq
         ,first_value(t1.contact) OVER (PARTITION BY t1.order_id ORDER BY t1.seq_no DESC) AS last_contact
-        ,first_value(t1.service_end_time) OVER (PARTITION BY t1.order_id ORDER BY if(t1.service_end_time is not null, t1.service_end_time, '2001-01-01') DESC) AS last_txn_time
-        ,first_value(t1.comments) OVER (PARTITION BY t1.order_id ORDER BY if(t1.service_end_time is not null, t1.service_end_time, '2001-01-01') DESC) AS last_comment
+        ,first_value(transaction_failure_reason.failure_reason_id) OVER (PARTITION BY t1.order_id ORDER BY if(t1.service_end_time is not null, t1.service_end_time, '2001-01-01') DESC) AS last_failure_reason
 
     FROM orders o force index (granular_status, primary, shipper_id)
     JOIN transactions t1 force index (order_id, service_end_time, type, seq_no, waypoint_id) ON o.id = t1.order_id
@@ -124,7 +123,7 @@ SELECT
     ,delivery_hub_id
     ,delivery_hub
     ,no_attempts
-    ,last_comment
+    ,last_failure_reason
     ,last_contact
     ,h.name AS curr_hub
     ,trim(substring(h.name,1,3)) AS curr_province
