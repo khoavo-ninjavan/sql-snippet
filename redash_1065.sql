@@ -45,11 +45,11 @@ orders_cfg AS (
         AND o.rts = 0
         AND t1.service_end_time > now() - interval 3 day
         AND t1.type = 'DD'
-        AND t1.seq_no >=2 
-        AND t1.status !='Pending'
-    JOIN transaction_failure_reason ON t1.id = transaction_failure_reason.transaction_id
+        AND (t1.seq_no >=3 OR (t1.seq_no =2 AND t1.status !='Pending'))
+        
+    LEFT JOIN transaction_failure_reason ON t1.id = transaction_failure_reason.transaction_id
         AND transaction_failure_reason.created_at > now() - interval 3 day
-    JOIN waypoints wp force index (PRIMARY, created_at, waypoints_routing_zone_id_zone_type_index) ON wp.id = t1.waypoint_id
+    LEFT JOIN waypoints wp force index (PRIMARY, created_at, waypoints_routing_zone_id_zone_type_index) ON wp.id = t1.waypoint_id
         AND wp.created_at > now() - interval 3 day
     LEFT JOIN (
         SELECT 
