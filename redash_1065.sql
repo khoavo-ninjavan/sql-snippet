@@ -26,7 +26,7 @@ orders_cfg AS (
         ,o.shipper_id
         ,s0.name AS shipper_name
         ,o.granular_status
-        ,o.cod
+        ,o.cod_id
         ,rts
         ,first_value(h.hub_id) OVER (PARTITION BY t1.order_id ORDER BY t1.seq_no DESC) AS delivery_hub_id
         ,first_value(h.name) OVER (PARTITION BY t1.order_id ORDER BY t1.seq_no DESC) AS delivery_hub
@@ -121,7 +121,7 @@ orders_cfg AS (
 
 )
 SELECT 
-    order_id
+    pre.order_id
     ,tracking_id
     ,order_details.package_content
     ,cods.goods_amount AS cod_value
@@ -151,7 +151,7 @@ SELECT
 
 FROM pre
 LEFT JOIN order_details ON pre.order_id = order_details.order_id
-LEFT JOIN cods ON pre.cod = cods.id
+LEFT JOIN cods ON pre.cod_id = cods.id
 JOIN sort_prod_gl.hubs h ON h.hub_id = pre.last_scan_hub_id 
     AND h.system_id = 'vn'
     AND h.sort_hub = 0
