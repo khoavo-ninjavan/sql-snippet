@@ -28,6 +28,8 @@ orders_cfg AS (
         ,o.granular_status
         ,o.cod_id
         ,rts
+        ,first_value(waypoints.latitude) OVER (PARTITION BY t1.order_id ORDER BY t1.seq_no DESC) AS delivery_latitude
+        ,first_value(waypoints.longitude) OVER (PARTITION BY t1.order_id ORDER BY t1.seq_no DESC) AS delivery_longitude
         ,first_value(h.hub_id) OVER (PARTITION BY t1.order_id ORDER BY t1.seq_no DESC) AS delivery_hub_id
         ,first_value(h.name) OVER (PARTITION BY t1.order_id ORDER BY t1.seq_no DESC) AS delivery_hub
         ,first_value(trim(substring(h.name,1,3))) OVER (PARTITION BY t1.order_id ORDER BY t1.seq_no DESC) AS delivery_province
@@ -133,6 +135,8 @@ SELECT
     ,pre.created_at + interval 7 hour AS created_at
     ,pickup_at + interval 7 hour AS pickup_at
     ,granular_status
+    ,delivery_longitude
+    ,delivery_latitude
     ,delivery_hub_id
     ,delivery_hub
     ,no_attempts
