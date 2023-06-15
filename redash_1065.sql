@@ -43,9 +43,13 @@ orders_cfg AS (
         ,max(t1.service_end_time) AS last_attempt_at
 
     FROM orders o force index (granular_status, primary, shipper_id)
-    JOIN transactions t1 force index (order_id, service_end_time, type, seq_no, waypoint_id, route_id) ON o.id = t1.order_id
+    JOIN order_tags as ot force index (order_tags_order_id_tag_id_index) on o.id = ot.order_id
         AND o.granular_status IN ('On Hold','Arrived at Sorting Hub', 'On Vehicle for Delivery', 'Pending Reschedule')
         AND o.rts = 0
+        AND ot.tag_id in (123) /* POTENTIAL */
+        AND ot.deleted_at is null
+
+    JOIN transactions t1 force index (order_id, service_end_time, type, seq_no, waypoint_id, route_id) ON o.id = t1.order_id
         AND t1.service_end_time > now() - interval 3 day
         AND t1.type = 'DD'
         AND (t1.seq_no >=3 OR (t1.seq_no =2 AND t1.status !='Pending'))
@@ -85,7 +89,7 @@ orders_cfg AS (
         ) s0 ON o.shipper_id = s0.legacy_id
     
     WHERE TRUE 
-    
+
     GROUP BY 1
 )
 ,pre AS (
