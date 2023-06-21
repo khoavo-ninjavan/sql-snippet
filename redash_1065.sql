@@ -7,8 +7,8 @@ select id from driver_prod_gl.failure_reasons where system_id = 'vn' and descrip
 103:South, 89:HN, 101:North, 91:HCM
 */
 WITH 
-orders_cfg AS (
-    SELECT
+root AS (
+    SELECT 
         o.id AS order_id
         ,o.tracking_id
         ,o.created_at
@@ -28,6 +28,29 @@ orders_cfg AS (
         ,o.granular_status
         ,o.cod_id
         ,rts
+        
+    FROM order_tags ot force index (order_tags_order_id_tag_id_index)
+    JOIN orders o force index (primary, shipper_id) ON ot.order_id = o.id
+        AND tag_id = 123
+    JOIN (
+        SELECT
+            short_name
+            ,sales_person
+            ,legacy_id
+            ,name
+            
+        FROM shipper_prod_gl.shippers
+        
+        WHERE TRUE
+            AND shippers.system_id = 'vn'
+        ) s0 ON o.shipper_id = s0.legacy_id
+    
+    WHERE TRUE
+
+),
+orders_cfg AS (
+    SELECT
+        root.*
         ,first_value(wp.latitude) OVER (PARTITION BY t1.order_id ORDER BY t1.seq_no DESC) AS delivery_latitude
         ,first_value(wp.longitude) OVER (PARTITION BY t1.order_id ORDER BY t1.seq_no DESC) AS delivery_longitude
         ,first_value(h.hub_id) OVER (PARTITION BY t1.order_id ORDER BY t1.seq_no DESC) AS delivery_hub_id
@@ -42,26 +65,20 @@ orders_cfg AS (
         ,first_value(transaction_failure_reason.failure_reason_id) OVER (PARTITION BY t1.order_id ORDER BY t1.seq_no DESC) AS last_failure_reason_id
         ,max(t1.service_end_time) AS last_attempt_at
 
-    FROM orders o force index (granular_status, primary, shipper_id)
+    FROM root
 
-    JOIN transactions t1 force index (order_id, service_end_time, type, seq_no, waypoint_id, route_id) ON o.id = t1.order_id
-        AND o.granular_status IN ('Arrived at Sorting Hub', 'On Vehicle for Delivery', 'Pending Reschedule')
-        AND o.rts = 0
-        AND t1.service_end_time > now() - interval 7 day
+    JOIN transactions t1 force index (order_id, service_end_time, waypoint_id, route_id) ON root.order_id = t1.order_id
+        AND t1.service_end_time > now() - interval 1 week
         AND t1.type = 'DD'
-        AND (t1.seq_no >=3 OR (t1.seq_no =2 AND t1.status !='Pending'))
-        
-    JOIN order_tags as ot force index (order_tags_order_id_tag_id_index) on o.id = ot.order_id
-        AND ot.tag_id in (123) /* POTENTIAL */
-        AND ot.deleted_at is null
-        
+
     LEFT JOIN transaction_failure_reason ON t1.id = transaction_failure_reason.transaction_id
-        AND transaction_failure_reason.created_at > now() - interval 3 day
+        AND transaction_failure_reason.created_at > now() - interval 1 week
     LEFT JOIN waypoints wp force index (PRIMARY, created_at, waypoints_routing_zone_id_zone_type_index) ON wp.id = t1.waypoint_id
-        AND wp.created_at > now() - interval 3 day
+        AND wp.created_at > now() - interval 1 week
     LEFT JOIN (
         SELECT 
             hubs.name
+            ,hubs.region_id
             ,hubs.hub_id
             ,zones_view.legacy_zone_id
             
@@ -71,26 +88,12 @@ orders_cfg AS (
         WHERE TRUE
             AND zones_view.system_id = 'vn'
             AND hubs.system_id = 'vn'
-            AND hubs.region_id = {{region}}
-        ) h ON h.legacy_zone_id = wp.routing_zone_id 
-            AND h.hub_id IS NOT NULL
+        ) h ON h.legacy_zone_id = wp.routing_zone_id
     LEFT JOIN route_logs force index (primary, created_at) ON  route_logs.id = t1.route_id
-        AND route_logs.created_at > now() - interval 3 day
-    JOIN (
-        SELECT
-            short_name
-            ,sales_person
-            ,legacy_id
-            ,name
-            
-        FROM shipper_prod_gl.shippers
-        
-        WHERE TRUE
-            AND shippers.system_id = 'vn'
-        ) s0 ON o.shipper_id = s0.legacy_id
+        AND route_logs.created_at > now() - interval 1 week
     
-    WHERE TRUE 
-
+    WHERE TRUE
+    AND h.region_id = {{region}}
     GROUP BY 1
 )
 ,pre AS (
@@ -166,7 +169,3 @@ JOIN sort_prod_gl.hubs h ON h.hub_id = pre.last_scan_hub_id
     AND h.sort_hub = 0
     
 WHERE TRUE
-    AND pre.last_scan_hub_id = pre.delivery_hub_id 
-    OR (
-        pre.last_scan_hub_id != pre.delivery_hub_id 
-        AND trim(substring(h.name,1,3)) = pre.delivery_province)
