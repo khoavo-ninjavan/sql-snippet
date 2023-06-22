@@ -9,6 +9,7 @@ select id from driver_prod_gl.failure_reasons where system_id = 'vn' and descrip
 WITH 
 orders_cfg AS (
     SELECT
+        distinct
         o.id AS order_id
         ,o.tracking_id
         ,o.created_at
@@ -33,14 +34,14 @@ orders_cfg AS (
         ,first_value(h.hub_id) OVER (PARTITION BY t1.order_id ORDER BY t1.seq_no DESC) AS delivery_hub_id
         ,first_value(h.name) OVER (PARTITION BY t1.order_id ORDER BY t1.seq_no DESC) AS delivery_hub
         ,first_value(trim(substring(h.name,1,3))) OVER (PARTITION BY t1.order_id ORDER BY t1.seq_no DESC) AS delivery_province
-        ,max(t1.seq_no) AS last_seq
+        ,first_value(t1.seq_no) OVER (PARTITION BY t1.order_id ORDER BY t1.seq_no DESC) AS last_seq
         ,first_value(t1.contact) OVER (PARTITION BY t1.order_id ORDER BY t1.seq_no DESC) AS last_contact
         ,first_value(t1.route_id) OVER (PARTITION BY t1.order_id ORDER BY t1.seq_no DESC) AS last_route
         ,first_value(route_logs.driver_id) OVER (PARTITION BY t1.order_id ORDER BY t1.seq_no DESC) AS last_driver
         ,first_value(t1.name) OVER (PARTITION BY t1.order_id ORDER BY t1.seq_no DESC) AS last_contact_name
         ,first_value(concat(t1.address1," - ", t1.address2)) OVER (PARTITION BY t1.order_id ORDER BY t1.seq_no DESC) AS last_contact_address
         ,first_value(transaction_failure_reason.failure_reason_id) OVER (PARTITION BY t1.order_id ORDER BY t1.seq_no DESC) AS last_failure_reason_id
-        ,max(t1.service_end_time) AS last_attempt_at
+        ,first_value(t1.service_end_time) OVER (PARTITION BY t1.order_id ORDER BY t1.seq_no DESC) AS last_attempt_at
 
     FROM orders o force index (granular_status, primary, shipper_id)
 
@@ -90,7 +91,6 @@ orders_cfg AS (
     WHERE TRUE 
     AND h.hub_id IS NOT NULL
     AND ot.order_id IS NULL
-    GROUP BY 1
 )
 ,pre AS (
     SELECT 
