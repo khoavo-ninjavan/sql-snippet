@@ -72,6 +72,7 @@ orders_cfg AS (
             AND zones_view.system_id = 'vn'
             AND hubs.system_id = 'vn'
             AND hubs.region_id = {{region}}
+            AND hubs.hub_id !=1
         ) h ON h.legacy_zone_id = wp.routing_zone_id
     LEFT JOIN route_logs force index (primary, created_at) ON  route_logs.id = t1.route_id
         AND route_logs.created_at > now() - interval 3 day
