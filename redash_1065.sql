@@ -64,7 +64,7 @@ orders_cfg AS (
         ,first_value(t1.name) OVER (PARTITION BY t1.order_id ORDER BY t1.seq_no DESC) AS last_contact_name
         ,first_value(concat(t1.address1," - ", t1.address2)) OVER (PARTITION BY t1.order_id ORDER BY t1.seq_no DESC) AS last_contact_address
         ,first_value(transaction_failure_reason.failure_reason_id) OVER (PARTITION BY t1.order_id ORDER BY t1.seq_no DESC) AS last_failure_reason_id
-        ,first_value(t1.service_end_time) OVER (PARTITION BY t1.order_id ORDER BY t1.seq_no DESC) AS last_seq AS last_attempt_at
+        ,first_value(t1.service_end_time) OVER (PARTITION BY t1.order_id ORDER BY t1.seq_no DESC) AS last_attempt_at
 
     FROM root
 
