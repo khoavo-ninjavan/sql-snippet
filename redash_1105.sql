@@ -48,7 +48,7 @@ orders_cfg AS (
     JOIN transactions t1 force index (order_id, service_end_time, type, seq_no, waypoint_id, route_id) ON o.id = t1.order_id
         AND o.granular_status IN ('Arrived at Sorting Hub', 'On Vehicle for Delivery', 'Pending Reschedule')
         AND o.rts = 0
-        AND t1.service_end_time > now() - interval 7 day
+        AND t1.service_end_time > now() - interval 1 week
         AND t1.type = 'DD'
         AND (t1.seq_no >=3 OR (t1.seq_no =2 AND t1.status !='Pending'))
     
@@ -56,9 +56,9 @@ orders_cfg AS (
         AND ot.tag_id = 123 /* POTENTIAL */
         
     LEFT JOIN transaction_failure_reason ON t1.id = transaction_failure_reason.transaction_id
-        AND transaction_failure_reason.created_at > now() - interval 3 day
+        AND transaction_failure_reason.created_at > now() - interval 1 week
     LEFT JOIN waypoints wp force index (PRIMARY, created_at, waypoints_routing_zone_id_zone_type_index) ON wp.id = t1.waypoint_id
-        AND wp.created_at > now() - interval 3 day
+        AND wp.created_at > now() - interval 1 week
     LEFT JOIN (
         SELECT 
             hubs.name
@@ -74,9 +74,9 @@ orders_cfg AS (
             AND hubs.region_id = {{region}}
             AND hubs.hub_id !=1
         ) h ON h.legacy_zone_id = wp.routing_zone_id
-    LEFT JOIN route_prod_gl.route_logs force index (primary, created_at) ON  route_logs.id = t1.route_id
+    LEFT JOIN route_prod_gl.route_logs force index (primary, created_at) ON  route_logs.legacy_id = t1.route_id
         AND system_id = 'vn'
-        AND route_logs.created_at > now() - interval 3 day
+        AND route_logs.created_at > now() - interval 1 week
     JOIN (
         SELECT
             short_name
