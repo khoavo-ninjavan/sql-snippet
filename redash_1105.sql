@@ -167,6 +167,7 @@ JOIN sort_prod_gl.hubs h ON h.hub_id = pre.last_scan_hub_id
     AND h.sort_hub = 0
     
 WHERE TRUE
+    AND no_attempts >= 2
     AND pre.last_scan_hub_id = pre.delivery_hub_id 
     OR (
         pre.last_scan_hub_id != pre.delivery_hub_id 
