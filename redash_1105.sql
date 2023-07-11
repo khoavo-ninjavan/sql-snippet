@@ -17,11 +17,11 @@ orders_cfg AS (
         ,o.latest_inbound_scan_id
         ,o.from_contact
         ,CASE
-            WHEN substr(trim(s0.short_name),1,9) ='TOKGISTIC' THEN 'TikTok Domestic'        
             WHEN substr(trim(s0.short_name),1,6) = 'Shopee' THEN 'Shopee'
             WHEN (LEFT(s0.sales_person, 4) IN ('FHN-', 'FTS-', 'FNO-', 'FSO-', 'FBD-')) OR (LEFT(s0.sales_person, 4) = 'FHC-' AND s0.name NOT REGEXP 'RTL|FRC') THEN 'FS'
             WHEN substr(trim(s0.short_name),1,6) ='Lazada' THEN 'Lazada'
             WHEN s0.legacy_id = 824968 THEN 'TikTok XBorder'
+            WHEN substr(trim(s0.short_name),1,9) ='TOKGISTIC' THEN 'TikTok Domestic'
             ELSE 'Others'
         END AS shipper_group
         ,o.shipper_id
