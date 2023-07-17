@@ -127,6 +127,7 @@ orders_cfg AS (
             AND status = 'Success'
         ) t ON t.order_id = orders_cfg.order_id
     WHERE TRUE
+        AND orders_cfg.shipper_group = 'TikTok Domestic'
 
 )
 SELECT 

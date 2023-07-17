@@ -98,6 +98,7 @@ orders_cfg AS (
     
     WHERE TRUE
     AND h.region_id = {{region}}
+    AND root.shipper_group = 'TikTok Domestic'
 )
 ,pre AS (
     SELECT 
