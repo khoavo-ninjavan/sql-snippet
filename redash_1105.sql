@@ -49,7 +49,7 @@ orders_cfg AS (
         AND o.granular_status IN ('Arrived at Sorting Hub', 'On Vehicle for Delivery', 'Pending Reschedule')
         AND o.rts = 0
         AND t1.service_end_time > now() - interval 1 week
-        AND t1.service_end_time <= date '2023-07-16' + interval 7 hour
+        AND t1.service_end_time <= date '2023-07-16' + interval 17 hour
         AND t1.type = 'DD'
         AND (t1.seq_no >=3 OR (t1.seq_no =2 AND t1.status !='Pending'))
     
