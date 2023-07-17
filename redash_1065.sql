@@ -32,7 +32,7 @@ root AS (
     FROM order_tags ot force index (order_tags_order_id_tag_id_index)
     JOIN orders o force index (primary, shipper_id) ON ot.order_id = o.id
         AND tag_id = 123
-        AND o.rts = 0
+        -- AND o.rts = 0
     JOIN (
         SELECT
             short_name
