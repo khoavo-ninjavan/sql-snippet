@@ -48,7 +48,7 @@ orders_cfg AS (
     JOIN transactions t1 force index (order_id, service_end_time, type, seq_no, waypoint_id, route_id) ON o.id = t1.order_id
         AND o.granular_status IN ('Arrived at Sorting Hub', 'On Vehicle for Delivery', 'Pending Reschedule')
         AND o.rts = 0
-        AND t1.service_end_time > now() - interval 1 week
+        AND t1.service_end_time > date '2023-07-16' - interval 7 hour - interval 1 week
         AND t1.type = 'DD'
         AND (t1.seq_no >=3 OR (t1.seq_no =2 AND t1.status !='Pending'))
     
