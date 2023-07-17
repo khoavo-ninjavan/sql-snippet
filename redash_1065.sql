@@ -137,7 +137,7 @@ SELECT
     pre.order_id
     ,tracking_id
     ,order_details.package_content
-    ,cods.goods_amount AS cod_value
+    ,COALESCE(cods.goods_amount,0) AS cod_value
     ,rts
     ,shipper_id
     ,shipper_name
