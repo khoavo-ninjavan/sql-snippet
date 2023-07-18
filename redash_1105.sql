@@ -28,6 +28,7 @@ orders_cfg AS (
         ,s0.name AS shipper_name
         ,o.granular_status
         ,o.cod_id
+        ,o.type AS order_type
         ,rts
         ,first_value(wp.latitude) OVER (PARTITION BY t1.order_id ORDER BY t1.seq_no DESC) AS delivery_latitude
         ,first_value(wp.longitude) OVER (PARTITION BY t1.order_id ORDER BY t1.seq_no DESC) AS delivery_longitude
@@ -127,6 +128,7 @@ orders_cfg AS (
             AND status = 'Success'
         ) t ON t.order_id = orders_cfg.order_id
     WHERE TRUE
+        AND orders_cfg.order_type = 'Normal'
         AND orders_cfg.shipper_group = 'TikTok Domestic'
 
 )

@@ -28,7 +28,8 @@ root AS (
         ,o.granular_status
         ,o.cod_id
         ,rts
-        
+        ,o.type AS order_type
+
     FROM order_tags ot force index (order_tags_order_id_tag_id_index)
     JOIN orders o use index (primary, shipper_id, granular_status, updated_at) ON ot.order_id = o.id
         AND tag_id = 123
@@ -71,7 +72,7 @@ orders_cfg AS (
     FROM root
 
     JOIN transactions t1 force index (order_id, service_end_time, waypoint_id, route_id) ON root.order_id = t1.order_id
-        AND t1.service_end_time > now() - interval 3 day
+        AND t1.service_end_time > now() - interval 1 week
         AND t1.type = 'DD'
 
     LEFT JOIN transaction_failure_reason ON t1.id = transaction_failure_reason.transaction_id
@@ -100,6 +101,7 @@ orders_cfg AS (
     WHERE TRUE
     AND h.region_id = {{region}}
     AND root.shipper_group = 'TikTok Domestic'
+    AND root.order_type = 'Normal'
 )
 ,pre AS (
     SELECT 
