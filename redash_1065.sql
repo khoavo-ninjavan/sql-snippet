@@ -34,7 +34,7 @@ root AS (
     JOIN orders o use index (primary, shipper_id, granular_status, updated_at) ON ot.order_id = o.id
         AND tag_id = 123
         AND o.rts = 0
-        AND NOT (o.granular_status IN ('Completed','Returned to Sender') AND o.updated_at < now() - interval 3 day) -- filter 1
+        AND NOT (o.granular_status IN ('Completed','Returned to Sender') AND o.updated_at < now() - interval 3 day) /* filter 1 */
     JOIN (
         SELECT
             short_name
@@ -177,4 +177,4 @@ JOIN sort_prod_gl.hubs h ON h.hub_id = pre.last_scan_hub_id
     AND h.sort_hub = 0
     
 WHERE TRUE
-    AND NOT (pre.granular_status IN ('Completed','Returned to Sender') AND pre.last_attempt_date < DATE(now() + interval 7 hour)) -- filter 2
+    AND NOT (pre.granular_status IN ('Completed','Returned to Sender') AND pre.last_attempt_date < DATE(now() + interval 7 hour)) /* filter 2 */
