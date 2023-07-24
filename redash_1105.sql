@@ -44,40 +44,23 @@ orders_cfg AS (
         ,first_value(transaction_failure_reason.failure_reason_id) OVER (PARTITION BY t1.order_id ORDER BY t1.seq_no DESC) AS last_failure_reason_id
         ,first_value(t1.service_end_time) OVER (PARTITION BY t1.order_id ORDER BY t1.seq_no DESC) AS last_attempt_at
 
-    FROM orders o force index (granular_status, primary, shipper_id)
+    FROM orders o use index (granular_status, primary, shipper_id)
 
-    JOIN transactions t1 force index (order_id, service_end_time, type, seq_no, waypoint_id, route_id) ON o.id = t1.order_id
+    JOIN transactions t1 use index (order_id, service_end_time, type, seq_no, waypoint_id, route_id, status) ON o.id = t1.order_id
         AND o.granular_status IN ('Arrived at Sorting Hub', 'On Vehicle for Delivery', 'Pending Reschedule')
         AND o.rts = 0
         AND t1.service_end_time > now() - interval 1 week
         AND t1.type = 'DD'
-        AND (t1.seq_no >=3 OR (t1.seq_no =2 AND t1.status !='Pending'))
+        AND t1.status = 'Fail'
     
-    LEFT JOIN order_tags as ot force index (order_tags_order_id_tag_id_index) on o.id = ot.order_id
-        AND ot.tag_id = 123 /* POTENTIAL */
-        
-    LEFT JOIN transaction_failure_reason ON t1.id = transaction_failure_reason.transaction_id
-        AND transaction_failure_reason.created_at > now() - interval 1 week
-    LEFT JOIN waypoints wp force index (PRIMARY, created_at, waypoints_routing_zone_id_zone_type_index) ON wp.id = t1.waypoint_id
-        AND wp.created_at > now() - interval 1 week
-    LEFT JOIN (
-        SELECT 
-            hubs.name
-            ,hubs.hub_id
-            ,zones_view.legacy_zone_id
-            
-        FROM addressing_prod_gl.zones_view
-        JOIN sort_prod_gl.hubs force index (system_id) ON zones_view.hub_id = hubs.hub_id
-        
-        WHERE TRUE
-            AND zones_view.system_id = 'vn'
-            AND hubs.system_id = 'vn'
-            AND hubs.region_id = {{region}}
-            AND hubs.hub_id !=1
-        ) h ON h.legacy_zone_id = wp.routing_zone_id
     LEFT JOIN route_prod_gl.route_logs force index (primary, created_at) ON  route_logs.legacy_id = t1.route_id
         AND system_id = 'vn'
         AND route_logs.created_at > now() - interval 1 week
+
+    JOIN sort_prod_gl.hubs h use index (system_id, region_id) on h.hub_id = route_logs.hub_id
+        AND h.system_id = 'vn'
+        AND h.region_id = {{region}}
+        AND h.hub_id !=1
     JOIN (
         SELECT
             short_name
@@ -91,16 +74,23 @@ orders_cfg AS (
             AND shippers.system_id = 'vn'
             AND substr(trim(shippers.short_name),1,9) ='TOKGISTIC'
         ) s0 ON o.shipper_id = s0.legacy_id
+
+    LEFT JOIN order_tags as ot force index (order_tags_order_id_tag_id_index) on o.id = ot.order_id
+        AND ot.tag_id = 123 /* POTENTIAL */
+        
+    LEFT JOIN transaction_failure_reason ON t1.id = transaction_failure_reason.transaction_id
+        AND transaction_failure_reason.created_at > now() - interval 1 week
+    LEFT JOIN waypoints wp force index (PRIMARY, created_at, waypoints_routing_zone_id_zone_type_index) ON wp.id = t1.waypoint_id
+        AND wp.created_at > now() - interval 1 week
     
     WHERE TRUE 
-    AND h.hub_id IS NOT NULL
-    AND ot.order_id IS NULL
+        AND ot.order_id IS NULL
 )
 ,pre AS (
     SELECT 
         orders_cfg.*
         ,t.service_end_time AS pickup_at
-        ,last_seq - t.seq_no AS no_attempts
+        ,last_seq - 1 AS no_attempts
         ,CASE 
             WHEN GREATEST(COALESCE(is0.created_at, ''), COALESCE(ws0.created_at, '')) = COALESCE(is0.created_at, '') THEN is0.hub_id
             ELSE ws0.hub_id
