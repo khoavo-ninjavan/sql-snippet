@@ -74,7 +74,7 @@ orders_cfg AS (
     JOIN transactions t1 force index (order_id, service_end_time, waypoint_id, route_id, status) ON root.order_id = t1.order_id
         AND t1.service_end_time > now() - interval 1 week
         AND t1.type = 'DD'
-        AND t1.status = 'Fail'
+        AND t1.status != 'Pending'
 
     LEFT JOIN route_prod_gl.route_logs force index (primary, created_at) ON  route_logs.legacy_id = t1.route_id
         AND system_id = 'vn'
