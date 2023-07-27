@@ -97,6 +97,7 @@ orders_cfg AS (
     SELECT 
         orders_cfg.*
         ,DATE(orders_cfg.last_attempt_at + interval 7 hour) AS last_attempt_date
+        ,SUBSTR(orders_cfg.last_contact_name, -5) AS leg
         ,t.service_end_time AS pickup_at
         ,last_seq - 1 AS no_attempts
         ,CASE 
@@ -167,5 +168,6 @@ JOIN sort_prod_gl.hubs h ON h.hub_id = pre.last_scan_hub_id
     AND h.sort_hub = 0
     
 WHERE TRUE
-    AND NOT (rts = 1 AND pre.last_attempt_date < DATE(now() + interval 7 hour))
+    AND NOT pre.leg = '(RTS)'
+    AND NOT (rts = 1 AND pre.leg != '(RTS)' AND pre.last_attempt_date < DATE(now() + interval 7 hour))
     AND NOT (pre.granular_status IN ('Completed','Returned to Sender') AND pre.last_attempt_date < DATE(now() + interval 7 hour)) /* filter 2 */
