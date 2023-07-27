@@ -33,7 +33,6 @@ root AS (
     FROM order_tags ot force index (order_tags_order_id_tag_id_index)
     JOIN orders o use index (primary, shipper_id, granular_status, updated_at) ON ot.order_id = o.id
         AND tag_id = 123
-        AND o.rts = 0
         AND NOT (o.granular_status IN ('Completed','Returned to Sender') AND o.updated_at < now() - interval 3 day) /* filter 1 */
     JOIN (
         SELECT
@@ -60,13 +59,13 @@ orders_cfg AS (
         ,first_value(h.hub_id) OVER (PARTITION BY t1.order_id ORDER BY t1.seq_no DESC) AS delivery_hub_id
         ,first_value(h.name) OVER (PARTITION BY t1.order_id ORDER BY t1.seq_no DESC) AS delivery_hub
         ,first_value(trim(substring(h.name,1,3))) OVER (PARTITION BY t1.order_id ORDER BY t1.seq_no DESC) AS delivery_province
-        ,first_value(t1.seq_no) OVER (PARTITION BY t1.order_id ORDER BY IF(t1.status='Fail' AND t1.service_end_time < curdate() + interval 17 hour, t1.seq_no, 0) DESC) AS last_seq
+        ,first_value(t1.seq_no) OVER (PARTITION BY t1.order_id ORDER BY IF(t1.status='Fail' AND t1.service_end_time < curdate() - interval 17 hour, t1.seq_no, 0) DESC) AS last_seq
         ,first_value(t1.contact) OVER (PARTITION BY t1.order_id ORDER BY t1.seq_no DESC) AS last_contact
         ,first_value(t1.route_id) OVER (PARTITION BY t1.order_id ORDER BY t1.seq_no DESC) AS last_route
         ,first_value(route_logs.driver_id) OVER (PARTITION BY t1.order_id ORDER BY t1.seq_no DESC) AS last_driver
         ,first_value(t1.name) OVER (PARTITION BY t1.order_id ORDER BY t1.seq_no DESC) AS last_contact_name
         ,first_value(concat(t1.address1," - ", t1.address2)) OVER (PARTITION BY t1.order_id ORDER BY t1.seq_no DESC) AS last_contact_address
-        ,first_value(transaction_failure_reason.failure_reason_id) OVER (PARTITION BY t1.order_id ORDER BY IF(t1.status='Fail' AND t1.service_end_time < curdate() + interval 17 hour, t1.seq_no, 0) DESC) AS last_failure_reason_id
+        ,first_value(transaction_failure_reason.failure_reason_id) OVER (PARTITION BY t1.order_id ORDER BY IF(t1.status='Fail' AND t1.service_end_time < curdate() - interval 17 hour, t1.seq_no, 0) DESC) AS last_failure_reason_id
         ,first_value(t1.service_end_time) OVER (PARTITION BY t1.order_id ORDER BY t1.seq_no DESC) AS last_attempt_at
 
     FROM root
@@ -98,6 +97,7 @@ orders_cfg AS (
     SELECT 
         orders_cfg.*
         ,DATE(orders_cfg.last_attempt_at) AS last_attempt_date
+        ,SUBSTR(orders_cfg.last_contact_name, -5) AS leg
         ,t.service_end_time AS pickup_at
         ,last_seq - 1 AS no_attempts
         ,CASE 
@@ -133,7 +133,7 @@ SELECT
     pre.order_id
     ,tracking_id
     ,order_details.package_content
-    ,COALESCE(cods.goods_amount,0) AS cod_value
+    ,COALESCE(CAST(cods.goods_amount AS SIGNED),0) AS cod_value
     ,rts
     ,shipper_id
     ,shipper_name
@@ -168,4 +168,5 @@ JOIN sort_prod_gl.hubs h ON h.hub_id = pre.last_scan_hub_id
     AND h.sort_hub = 0
     
 WHERE TRUE
+    AND NOT (pre.leg = '(RTS)' AND pre.last_attempt_date < DATE(now() + interval 7 hour))
     AND NOT (pre.granular_status IN ('Completed','Returned to Sender') AND pre.last_attempt_date < DATE(now() + interval 7 hour)) /* filter 2 */
