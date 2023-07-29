@@ -75,9 +75,8 @@ orders_cfg AS (
             AND substr(trim(shippers.short_name),1,9) ='TOKGISTIC'
         ) s0 ON o.shipper_id = s0.legacy_id
 
-    LEFT JOIN order_tags as ot use index (order_tags_order_id_tag_id_index, created_at) on o.id = ot.order_id
+    LEFT JOIN order_tags as ot use index (order_tags_order_id_tag_id_index) on o.id = ot.order_id
         AND ot.tag_id = 123 /* POTENTIAL */
-        AND ot.created_at > now() - interval 1 month
         
     LEFT JOIN transaction_failure_reason ON t1.id = transaction_failure_reason.transaction_id
         AND transaction_failure_reason.created_at > now() - interval 2 week
