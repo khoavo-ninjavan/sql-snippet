@@ -49,13 +49,13 @@ orders_cfg AS (
     JOIN transactions t1 use index (order_id, service_end_time, type, seq_no, waypoint_id, route_id, status) ON o.id = t1.order_id
         AND o.granular_status IN ('Arrived at Sorting Hub', 'On Vehicle for Delivery', 'Pending Reschedule')
         AND o.rts = 0
-        AND t1.service_end_time > now() - interval 1 week
+        AND t1.service_end_time > now() - interval 2 week
         AND t1.type = 'DD'
         AND t1.status = 'Fail'
     
     LEFT JOIN route_prod_gl.route_logs force index (primary, created_at) ON  route_logs.legacy_id = t1.route_id
         AND system_id = 'vn'
-        AND route_logs.created_at > now() - interval 1 week
+        AND route_logs.created_at > now() - interval 2 week
 
     JOIN sort_prod_gl.hubs h use index (system_id, region_id) on h.hub_id = route_logs.hub_id
         AND h.system_id = 'vn'
@@ -75,13 +75,14 @@ orders_cfg AS (
             AND substr(trim(shippers.short_name),1,9) ='TOKGISTIC'
         ) s0 ON o.shipper_id = s0.legacy_id
 
-    LEFT JOIN order_tags as ot force index (order_tags_order_id_tag_id_index) on o.id = ot.order_id
+    LEFT JOIN order_tags as ot use index (order_tags_order_id_tag_id_index, created_at) on o.id = ot.order_id
         AND ot.tag_id = 123 /* POTENTIAL */
+        AND ot.created_at > now() - interval 1 month
         
     LEFT JOIN transaction_failure_reason ON t1.id = transaction_failure_reason.transaction_id
-        AND transaction_failure_reason.created_at > now() - interval 1 week
+        AND transaction_failure_reason.created_at > now() - interval 2 week
     LEFT JOIN waypoints wp force index (PRIMARY, created_at, waypoints_routing_zone_id_zone_type_index) ON wp.id = t1.waypoint_id
-        AND wp.created_at > now() - interval 1 week
+        AND wp.created_at > now() - interval 2 week
     
     WHERE TRUE 
         AND ot.order_id IS NULL
@@ -126,7 +127,7 @@ SELECT
     pre.order_id
     ,tracking_id
     ,order_details.package_content
-    ,COALESCE(cods.goods_amount,0) AS cod_value
+    ,COALESCE(CAST(cods.goods_amount AS SIGNED),0) AS cod_value
     ,rts
     ,shipper_id
     ,shipper_name
