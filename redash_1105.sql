@@ -49,13 +49,13 @@ orders_cfg AS (
     JOIN transactions t1 use index (order_id, service_end_time, type, seq_no, waypoint_id, route_id, status) ON o.id = t1.order_id
         AND o.granular_status IN ('Arrived at Sorting Hub', 'On Vehicle for Delivery', 'Pending Reschedule')
         AND o.rts = 0
-        AND t1.service_end_time > now() - interval 2 week
+        AND t1.service_end_time > now() - interval 10 day
         AND t1.type = 'DD'
         AND t1.status = 'Fail'
     
     LEFT JOIN route_prod_gl.route_logs force index (primary, created_at) ON  route_logs.legacy_id = t1.route_id
         AND system_id = 'vn'
-        AND route_logs.created_at > now() - interval 2 week
+        AND route_logs.created_at > now() - interval 10 day
 
     JOIN sort_prod_gl.hubs h use index (system_id, region_id) on h.hub_id = route_logs.hub_id
         AND h.system_id = 'vn'
@@ -79,9 +79,9 @@ orders_cfg AS (
         AND ot.tag_id = 123 /* POTENTIAL */
         
     LEFT JOIN transaction_failure_reason ON t1.id = transaction_failure_reason.transaction_id
-        AND transaction_failure_reason.created_at > now() - interval 2 week
+        AND transaction_failure_reason.created_at > now() - interval 10 day
     LEFT JOIN waypoints wp force index (PRIMARY, created_at, waypoints_routing_zone_id_zone_type_index) ON wp.id = t1.waypoint_id
-        AND wp.created_at > now() - interval 2 week
+        AND wp.created_at > now() - interval 10 day
     
     WHERE TRUE 
         AND ot.order_id IS NULL
@@ -120,8 +120,8 @@ orders_cfg AS (
     WHERE TRUE
         AND orders_cfg.order_type = 'Normal'
         AND orders_cfg.shipper_group = 'TikTok Domestic'
-
 )
+
 SELECT 
     pre.order_id
     ,tracking_id
