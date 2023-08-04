@@ -169,4 +169,5 @@ JOIN sort_prod_gl.hubs h ON h.hub_id = pre.last_scan_hub_id
     
 WHERE TRUE
     AND NOT pre.leg = '(RTS)'
+    AND NOT (rts = 1 AND pre.leg != '(RTS)' AND pre.last_attempt_date < DATE(now() + interval 7 hour))
     AND NOT (pre.granular_status IN ('Completed','Returned to Sender') AND pre.last_attempt_date < DATE(now() + interval 7 hour)) /* filter 2 */
