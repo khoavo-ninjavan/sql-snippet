@@ -150,6 +150,7 @@ SELECT
     ,no_attempts
     ,last_attempt_at + interval 7 hour AS last_attempt_at
     ,last_failure_reason_id
+    ,latest_failure_reason_id
     ,last_route
     ,last_driver
     ,last_contact
