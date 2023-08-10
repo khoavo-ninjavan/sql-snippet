@@ -66,13 +66,15 @@ orders_cfg AS (
             short_name
             ,sales_person
             ,legacy_id
+            ,shippers.id
             ,name
-            
-        FROM shipper_prod_gl.shippers
+                    
+        FROM shipper_prod_gl.shippers force index (PRIMARY,shipper_system_id_legacy_id_idx)
+        JOIN shipper_prod_gl.marketplace_sellers force index (marketplace_sellers_marketplace_id_external_ref_uindex) ON shippers.id = marketplace_sellers.seller_id
         
         WHERE TRUE
             AND shippers.system_id = 'vn'
-            AND substr(trim(shippers.short_name),1,9) ='TOKGISTIC'
+            AND (shippers.id = 6693746  OR marketplace_sellers.marketplace_id = 9090233)
         ) s0 ON o.shipper_id = s0.legacy_id
 
     LEFT JOIN order_tags as ot use index (order_tags_order_id_tag_id_index) on o.id = ot.order_id
