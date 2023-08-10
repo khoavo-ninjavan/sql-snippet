@@ -121,7 +121,7 @@ orders_cfg AS (
         ) t ON t.order_id = orders_cfg.order_id
     WHERE TRUE
         AND orders_cfg.order_type = 'Normal'
-        AND orders_cfg.shipper_group = 'TikTok Domestic'
+
 )
 
 SELECT 

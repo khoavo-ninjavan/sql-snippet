@@ -91,8 +91,7 @@ orders_cfg AS (
         AND wp.created_at > now() - interval 10 day
         
     WHERE TRUE
-    AND root.shipper_group = 'TikTok Domestic'
-    AND root.order_type = 'Normal'
+
 )
 ,pre AS (
     SELECT 
