@@ -60,7 +60,7 @@ orders_cfg AS (
     JOIN sort_prod_gl.hubs h use index (system_id, region_id) on h.hub_id = route_logs.hub_id
         AND h.system_id = 'vn'
         AND h.region_id = {{region}}
-        AND h.hub_id !=1
+        AND h.hub_id NOT IN (1, 189)
     JOIN (
         SELECT
             short_name
