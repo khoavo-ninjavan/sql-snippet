@@ -83,7 +83,7 @@ orders_cfg AS (
     JOIN sort_prod_gl.hubs h use index (system_id, region_id) on h.hub_id = route_logs.hub_id
         AND h.system_id = 'vn'
         AND h.region_id = {{region}}
-        AND h.hub_id != 1
+        AND h.hub_id NOT IN (1, 189)
 
     LEFT JOIN transaction_failure_reason ON t1.id = transaction_failure_reason.transaction_id
         AND transaction_failure_reason.created_at > now() - interval 10 day
