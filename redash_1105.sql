@@ -70,7 +70,7 @@ orders_cfg AS (
             ,name
                     
         FROM shipper_prod_gl.shippers force index (PRIMARY,shipper_system_id_legacy_id_idx)
-        JOIN shipper_prod_gl.marketplace_sellers force index (marketplace_sellers_marketplace_id_external_ref_uindex) ON shippers.id = marketplace_sellers.seller_id
+        LEFT JOIN shipper_prod_gl.marketplace_sellers force index (marketplace_sellers_marketplace_id_external_ref_uindex) ON shippers.id = marketplace_sellers.seller_id
         
         WHERE TRUE
             AND shippers.system_id = 'vn'
