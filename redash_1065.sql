@@ -83,7 +83,15 @@ orders_cfg AS (
     JOIN sort_prod_gl.hubs h use index (system_id, region_id) on h.hub_id = route_logs.hub_id
         AND h.system_id = 'vn'
         AND h.region_id = {{region}}
-        AND h.hub_id NOT IN (1, 189)
+        AND h.hub_id NOT IN (1, 189, 103612, 518, 70)
+        /*
+        remove
+        1: VIET
+        189: HCM - Fleet - SOU
+        103612: HCM - Recovery - SOU
+        518: HN - Main Hub Fleet - NOR
+        70: HN - Recovery - NOR
+        */
 
     LEFT JOIN transaction_failure_reason ON t1.id = transaction_failure_reason.transaction_id
         AND transaction_failure_reason.created_at > now() - interval 10 day
