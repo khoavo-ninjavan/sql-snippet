@@ -31,7 +31,7 @@ root AS (
         ,o.type AS order_type
 
     FROM order_tags ot force index (order_tags_order_id_tag_id_index)
-    JOIN orders o use index (primary, shipper_id, granular_status, updated_at) ON ot.order_id = o.id
+    JOIN orders o use index (primary, shipper_id, granular_status) ON ot.order_id = o.id
         AND tag_id = 123
         AND NOT (o.granular_status IN ('Completed','Returned to Sender') AND o.updated_at < now() - interval 3 day) /* filter 1 */
     JOIN (
