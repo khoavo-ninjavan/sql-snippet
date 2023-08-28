@@ -152,7 +152,7 @@ SELECT
     ,last_seq
     ,last_service_end_date
     
-    ,IF(HOUR(shipment_completed_at) < 11, 'D0', 'D1') AS kpi_type
+    ,IF(HOUR(shipment_completed_at) < 11, 0, 1) AS kpi_type
     
 FROM delivery_hub
 JOIN sort_prod_gl.hubs h ON h.hub_id = delivery_hub.last_scan_hub_id 
