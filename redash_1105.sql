@@ -83,7 +83,7 @@ orders_cfg AS (
         
         WHERE TRUE
             AND shippers.system_id = 'vn'
-            AND (shippers.id = 6693746  OR marketplace_sellers.marketplace_id = 9090233)
+            AND marketplace_sellers.marketplace_id = 9090233
         ) s0 ON o.shipper_id = s0.legacy_id
 
     LEFT JOIN order_tags as ot use index (order_tags_order_id_tag_id_index) on o.id = ot.order_id
