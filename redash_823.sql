@@ -42,7 +42,7 @@ orders_cfg AS (
 
         FROM hub_prod_gl.shipment_orders force index (order_country, shipment_id, updated_at) 
 
-        JOIN hub_prod_gl.shipment_events force index (shipment_id, shipment_events_status_created_at_index) ON shipment_events.shipment_id = shipment_orders.shipment_id 
+        JOIN hub_prod_gl.shipment_events force index (shipment_id, shipment_events_created_at_and_event) ON shipment_events.shipment_id = shipment_orders.shipment_id 
 
         JOIN sort_prod_gl.hubs h ON h.hub_id = shipment_events.hub_id 
             AND h.system_id = 'vn'
@@ -52,8 +52,9 @@ orders_cfg AS (
         WHERE TRUE
             AND shipment_orders.order_country = 'vn' 
             AND shipment_events.hub_system_id = 'vn'
-            AND shipment_events.status = 'COMPLETED'
-            AND shipment_events.created_at >= DATE(date_add(now(), interval 7 hour)) - interval 2 day - interval 7 hour /* shipment N-2 */
+            AND shipment_events.event IN ('SHIPMENT_HUB_INBOUND', 'SHIPMENT_FORCE_COMPLETED')
+            AND shipment_events.created_at >= DATE(date_add(now(), interval 7 hour)) - interval 2 day + interval 4 hour /* shipment after 11h N-2 */
+            AND shipment_events.created_at < DATE(date_add(now(), interval 7 hour)) + interval 4 hour /* shipment before 11h N0 */
 
         ) sh0 ON sh0.order_id = o.id
 
@@ -163,12 +164,10 @@ LEFT JOIN cods c on delivery_hub.cod_id = c.id
 
 WHERE TRUE
     AND last_scan_hub_id = delivery_hub_id 
-    /* Reach hub N-2 N-1: remove completed and 2 fail attempts, Reach hub today: remove shipment compledted > 11h */
+    /* Reach hub N-2 N-1: remove completed and 2 fail attempts */
     AND NOT (
-        (COALESCE(delivery_hub.last_service_end_date, delivery_hub.first_service_end_date) <= DATE(date_add(now(), interval 7 hour)) - interval 1 day
+        COALESCE(delivery_hub.last_service_end_date, delivery_hub.first_service_end_date) <= DATE(date_add(now(), interval 7 hour)) - interval 1 day
         AND (COALESCE(IF(delivery_hub.last_status != 'Pending', delivery_hub.last_status, NULL), delivery_hub.first_status) = 'Success' 
             OR (delivery_hub.last_seq = 3 AND delivery_hub.last_failure_reason_id IS NOT NULL) /* reach 2 fail attempts */
             )
         )
-        OR (delivery_hub.shipment_completed_date = DATE(date_add(now(), interval 7 hour)) AND shipment_completed_at > DATE(date_add(now(), interval 7 hour)) + interval 11 hour)
-    )
