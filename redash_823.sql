@@ -30,7 +30,7 @@ orders_cfg AS (
         ,DATE(GREATEST(COALESCE(is0.created_at, ''), COALESCE(ws0.created_at, ''), COALESCE(sh0.shipment_completed_at, '')) + interval 7 hour) AS last_scan_date
         
         ,DATE_FORMAT(shipment_completed_at + interval 7 hour, '%Y-%m-%d %T') AS shipment_completed_at
-        ,DATE(shipment_completed_at + interval 7 hour) AS shipment_completed_date
+        ,DATE_FORMAT(shipment_completed_at + interval 7 hour, '%Y-%m-%d') AS shipment_completed_date
         
     FROM orders o use index (PRIMARY)
     
