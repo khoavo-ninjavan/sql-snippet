@@ -160,7 +160,7 @@ SELECT
     ,latest_failure_reason_id
     ,last_route
     ,last_driver
-    ,RIGHT(TRIM(last_contact),9) AS last_contact
+    ,last_contact
     ,last_contact_name
     ,last_contact_address
     ,h.name AS curr_hub
