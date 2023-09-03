@@ -134,12 +134,12 @@ SELECT
     ,h.hub_id
     ,h.short_name
     ,h.region_name
-    ,trim(substring(h.name,1,3)) AS province_code
+    ,TRIM(SUBSTRING(h.name,1,3)) AS province_code
     
     ,COALESCE(CAST(c.goods_amount AS SIGNED),0) AS cod_value
-    ,delivery_hub.buyer_contact
+    ,RIGHT(TRIM(delivery_hub.buyer_contact),9) AS buyer_contact
     ,delivery_hub.buyer_name
-    ,concat(delivery_hub.address1, ' ', delivery_hub.address2) as buyer_address
+    ,CONCAT(delivery_hub.address1, ' ', delivery_hub.address2) as buyer_address
 
     ,first_failure_reason_id
     ,first_route_id

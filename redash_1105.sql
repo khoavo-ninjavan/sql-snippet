@@ -155,7 +155,7 @@ SELECT
     ,last_failure_reason_id
     ,last_route
     ,last_driver
-    ,last_contact
+    ,RIGHT(TRIM(delivery_hub.last_contact),9) AS last_contact
     ,last_contact_name
     ,last_contact_address
     ,h.name AS curr_hub
