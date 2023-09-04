@@ -126,6 +126,7 @@ SELECT
     ,order_details.package_content
     ,shipper_id
     ,shipper_name
+    ,shipper_group
     ,granular_status
     ,shipment_completed_date
     ,shipment_completed_at
