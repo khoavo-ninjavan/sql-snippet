@@ -91,14 +91,16 @@ orders_cfg AS (
         
         ,first_value(transaction_failure_reason.failure_reason_id) OVER (PARTITION BY t1.order_id ORDER BY t1.seq_no ASC) AS first_failure_reason_id
         ,first_value(t1.route_id) OVER (PARTITION BY t1.order_id ORDER BY t1.seq_no ASC) AS first_route_id
-        ,first_value(route_logs.driver_id) OVER (PARTITION BY t1.order_id ORDER BY t1.seq_no ASC) AS first_driver_id            
+        ,first_value(route_logs.driver_id) OVER (PARTITION BY t1.order_id ORDER BY t1.seq_no ASC) AS first_driver_id   
+        ,first_value(t1.service_end_time + interval 7 hour) OVER (PARTITION BY t1.order_id ORDER BY t1.seq_no ASC) AS first_service_end_time         
         ,first_value(DATE(t1.service_end_time + interval 7 hour)) OVER (PARTITION BY t1.order_id ORDER BY t1.seq_no ASC) AS first_service_end_date
         ,first_value(t1.status) OVER (PARTITION BY t1.order_id ORDER BY t1.seq_no ASC) AS first_status
         ,first_value(t1.seq_no) OVER (PARTITION BY t1.order_id ORDER BY t1.seq_no ASC) AS first_seq
  
         ,first_value(transaction_failure_reason.failure_reason_id) OVER (PARTITION BY t1.order_id ORDER BY t1.seq_no DESC) AS last_failure_reason_id
         ,first_value(t1.route_id) OVER (PARTITION BY t1.order_id ORDER BY t1.seq_no DESC) AS last_route_id
-        ,first_value(route_logs.driver_id) OVER (PARTITION BY t1.order_id ORDER BY t1.seq_no DESC) AS last_driver_id       
+        ,first_value(route_logs.driver_id) OVER (PARTITION BY t1.order_id ORDER BY t1.seq_no DESC) AS last_driver_id
+        ,first_value(t1.service_end_time + interval 7 hour) OVER (PARTITION BY t1.order_id ORDER BY t1.seq_no DESC) AS last_service_end_time      
         ,first_value(DATE(t1.service_end_time + interval 7 hour)) OVER (PARTITION BY t1.order_id ORDER BY t1.seq_no DESC) AS last_service_end_date
         ,first_value(t1.status) OVER (PARTITION BY t1.order_id ORDER BY t1.seq_no DESC) AS last_status
         ,first_value(t1.seq_no) OVER (PARTITION BY t1.order_id ORDER BY t1.seq_no DESC) AS last_seq
@@ -147,12 +149,14 @@ SELECT
     ,first_driver_id
     ,first_seq
     ,first_service_end_date
+    ,first_service_end_time
     
     ,last_failure_reason_id
     ,last_route_id
     ,last_driver_id
     ,last_seq
     ,last_service_end_date
+    ,last_service_end_time
     
 FROM delivery_hub
 JOIN sort_prod_gl.hubs h ON h.hub_id = delivery_hub.last_scan_hub_id 
