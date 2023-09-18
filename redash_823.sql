@@ -53,7 +53,7 @@ orders_cfg AS (
             AND shipment_orders.order_country = 'vn' 
             AND shipment_events.hub_system_id = 'vn'
             AND shipment_events.event IN ('SHIPMENT_HUB_INBOUND', 'SHIPMENT_FORCE_COMPLETED')
-            AND shipment_events.created_at >= DATE(date_add(now(), interval 7 hour)) - interval 2 day + interval 4 hour /* shipment after 11h N-2 */
+            AND shipment_events.created_at >= DATE(date_add(now(), interval 7 hour)) - interval 3 day + interval 4 hour /* shipment after 11h N-3 */
             AND shipment_events.created_at < DATE(date_add(now(), interval 7 hour)) + interval 4 hour /* shipment before 11h N0 */
 
         ) sh0 ON sh0.order_id = o.id
