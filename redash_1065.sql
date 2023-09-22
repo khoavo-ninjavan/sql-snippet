@@ -33,7 +33,7 @@ root AS (
     FROM order_tags ot force index (order_tags_order_id_tag_id_index)
     JOIN orders o use index (primary, shipper_id, granular_status) ON ot.order_id = o.id
         AND tag_id = 123
-        AND NOT (o.granular_status IN ('Completed','Returned to Sender') AND o.updated_at < now() - interval 3 day) /* filter 1 */
+        AND NOT (o.granular_status IN ('Completed','Returned to Sender', 'Cancelled') AND o.updated_at < now() - interval 3 day) /* filter 1 */
     JOIN (
         SELECT
             short_name
@@ -186,4 +186,4 @@ WHERE TRUE
         )
     AND NOT pre.leg = '(RTS)'
     AND NOT (rts = 1 AND pre.leg != '(RTS)' AND pre.last_attempt_date < DATE(now() + interval 7 hour))
-    AND NOT (pre.granular_status IN ('Completed','Returned to Sender') AND pre.last_attempt_date < DATE(now() + interval 7 hour)) /* filter 2 */
+    AND NOT (pre.granular_status IN ('Completed','Returned to Sender', 'Cancelled') AND pre.last_attempt_date < DATE(now() + interval 7 hour)) /* filter 2 */
