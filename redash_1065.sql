@@ -33,7 +33,7 @@ root AS (
     FROM order_tags ot force index (order_tags_order_id_tag_id_index)
     JOIN orders o use index (primary, shipper_id, granular_status) ON ot.order_id = o.id
         AND tag_id = 123
-        AND NOT (o.granular_status IN ('Completed','Returned to Sender', 'Cancelled') AND o.updated_at < now() - interval 3 day) /* filter 1 */
+
     JOIN (
         SELECT
             short_name
@@ -48,6 +48,9 @@ root AS (
         ) s0 ON o.shipper_id = s0.legacy_id
     
     WHERE TRUE
+        AND NOT (o.granular_status IN ('Completed','Returned to Sender', 'Cancelled') AND o.updated_at < now() - interval 3 day) /* filter 1 */
+        AND o.type = 'Normal'
+
 
 ),
 orders_cfg AS (
