@@ -23,11 +23,11 @@ root AS (
             ,name
             
         FROM shipper_prod_gl.shippers
-        LEFT JOIN shipper_prod_gl.marketplace_sellers ON shippers.id = marketplace_sellers.seller_id
+        /* LEFT JOIN shipper_prod_gl.marketplace_sellers ON shippers.id = marketplace_sellers.seller_id */
     
         WHERE TRUE
             AND shippers.system_id = 'vn'
-            AND (marketplace_sellers.marketplace_id = 9090233 OR shippers.legacy_id = 824968)
+            /* AND (marketplace_sellers.marketplace_id = 9090233 OR shippers.legacy_id = 824968) */ 
         ) s0 ON o.shipper_id = s0.legacy_id
     
     WHERE TRUE
