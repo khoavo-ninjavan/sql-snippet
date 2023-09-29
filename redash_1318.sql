@@ -11,11 +11,33 @@ root AS (
     SELECT DISTINCT
         o.id AS order_id
 
-    FROM order_tags ot force index (order_tags_order_id_tag_id_index)
-    JOIN orders o use index (primary, shipper_id, granular_status) ON ot.order_id = o.id
-        AND tag_id = 123
+    FROM orders o use index (primary, shipper_id, granular_status)
+    
+    JOIN ticketing_prod_gl.tickets t ON t.order_id = o.id
+    
+    JOIN (
+        SELECT
+            short_name
+            ,sales_person
+            ,legacy_id
+            ,name
+            
+        FROM shipper_prod_gl.shippers
+        LEFT JOIN shipper_prod_gl.marketplace_sellers ON shippers.id = marketplace_sellers.seller_id
+    
+        WHERE TRUE
+            AND shippers.system_id = 'vn'
+            AND (marketplace_sellers.marketplace_id = 9090233 OR shippers.legacy_id = 824968)
+        ) s0 ON o.shipper_id = s0.legacy_id
+    
+    WHERE TRUE
         AND o.granular_status NOT IN ('Cancelled')
-        AND NOT (o.granular_status IN ('Completed','Returned to Sender') AND o.updated_at < now() - interval 3 day) /* filter 1 */
+        AND NOT (o.granular_status IN ('Completed','Returned to Sender') AND o.updated_at < now() - interval 3 day) /* filter 1 */    
+        AND t.country = 'vn'
+        AND t.deleted_at is NULL
+        AND t.type_id = 4 /* type: PARCEL EXCEPTION */
+        AND t.subtype_id in (5,30) /* sub_type: CUSTOMER REJECTED / MAXIMUM ATTEMPTS (DELIVERY) */
+        AND t.status_id not in (3,13) /* not in status: RESOLVED/CANCELLED */
 
 )
 
